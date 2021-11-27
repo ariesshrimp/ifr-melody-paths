@@ -19,15 +19,23 @@ export const isQuality = ([root, A, B, C = {}]) => {
     R.subtract(B.value, root.value),
     R.subtract(C.value, root.value)
   ]);
-  console.log(
+
+  console.log(root.value, A.value, B.value, C.value);
+  console.log([
     R.subtract(A.value, root.value),
     R.subtract(B.value, root.value),
     R.subtract(C.value, root.value)
-  );
-  if (intervals([4, 7, 11])) return "M7";
+  ]);
+  if (intervals([4, 7, 11]) || intervals([4, 7, -1])) return "M7";
   else if (intervals([3, 7, 10])) return "m7";
-  else if (intervals([3, 6, 9])) return "°7";
-  else if (intervals([3, 6, 10])) return "m7b5";
+  else if (
+    intervals([3, 6, 9]) ||
+    intervals([3, 6, -3]) ||
+    intervals([3, -6, -3]) ||
+    intervals([-9, -6, -3])
+  )
+    return "°7";
+  else if (intervals([3, 6, 10]) || intervals([3, 6, -2])) return "m7b5";
   else if (intervals([4, 7, 10])) return "D";
   else if (intervals([4, 7, NaN])) return "M";
   else if (intervals([4, 8, NaN])) return "+";
@@ -69,15 +77,15 @@ export const Sus4 = ([root]) =>
   [root, root + 5, root + 7].map(MaxOfTwelve).map(annotate);
 
 export default {
+  Major,
   Major7,
-  Minor7,
-  Augmented,
   Dominant,
-  Diminished,
-  Diminished7,
-  HalfDiminished,
   Sus2,
   Sus4,
-  Major,
-  Minor
+  Augmented,
+  Minor,
+  Minor7,
+  HalfDiminished,
+  Diminished,
+  Diminished7
 };

@@ -14,10 +14,100 @@ const SIX_AND_A_HALF = 11;
 const SEVEN = 12;
 
 export const nameNotesAsNaturals = (chord) => {
-  console.log(isQuality(chord));
   return chord.map((note) => {
     switch (chord[0].value) {
       case ONE_AND_A_HALF:
+        switch (note.value) {
+          case ONE:
+            return Note({
+              ...note,
+              relative: 7,
+              name: "7",
+              accidentals: ["#"]
+            });
+          case TWO:
+            return Note({
+              ...note,
+              relative: 2,
+              name: "2"
+            });
+          case THREE:
+            return Note({
+              ...note,
+              relative: 3,
+              name: "3"
+            });
+          case FOUR: {
+            if (isQuality(chord) === "sus4") {
+              return Note({
+                ...note,
+                relative: 4,
+                name: "4"
+              });
+            } else
+              return Note({
+                ...note,
+                relative: 3,
+                name: "3",
+                accidentals: ["#"]
+              });
+          }
+          case FIVE:
+            return Note({
+              ...note,
+              relative: 5,
+              name: "5"
+            });
+          case SIX:
+            return Note({
+              ...note,
+              relative: 6,
+              name: "6"
+            });
+          case SEVEN:
+            return Note({
+              ...note,
+              relative: 7,
+              name: "7"
+            });
+          case ONE_AND_A_HALF:
+            return Note({
+              ...note,
+              relative: 1,
+              name: "1",
+              accidentals: ["#"]
+            });
+          case TWO_AND_A_HALF:
+            return Note({
+              ...note,
+              relative: 2,
+              name: "2",
+              accidentals: ["#"]
+            });
+          case FOUR_AND_A_HALF:
+            return Note({
+              ...note,
+              relative: 4,
+              name: "4",
+              accidentals: ["#"]
+            });
+          case FIVE_AND_A_HALF:
+            return Note({
+              ...note,
+              relative: 5,
+              name: "5",
+              accidentals: ["#"]
+            });
+          case SIX_AND_A_HALF:
+            return Note({
+              ...note,
+              relative: 7,
+              name: "7",
+              accidentals: ["b"]
+            });
+          default:
+            return note;
+        }
       case ONE: {
         switch (note.value) {
           case ONE:
@@ -110,7 +200,93 @@ export const nameNotesAsNaturals = (chord) => {
             return note;
         }
       }
-      case TWO_AND_A_HALF:
+      case TWO_AND_A_HALF: {
+        switch (note.value) {
+          case ONE:
+            return Note({
+              ...note,
+              relative: 7,
+              name: "1",
+              accidentals: isQuality(chord) === "°7" ? [] : ["#"]
+            });
+          case TWO:
+            return Note({
+              ...note,
+              relative: 7,
+              name: "2"
+            });
+          case FOUR:
+            return Note({
+              ...note,
+              relative: isQuality(chord) === "sus2" ? 2 : 3,
+              name: isQuality(chord) === "sus2" ? "3" : "4",
+              accidentals: isQuality(chord) === "sus2" ? ["#"] : ["b"]
+            });
+          case FIVE:
+            return Note({
+              ...note,
+              relative: 3,
+              name: "5"
+            });
+          case SIX:
+            return Note({
+              ...note,
+              relative: 5,
+              name: "6"
+            });
+
+          case SEVEN:
+            return Note({
+              ...note,
+              relative: 5,
+              name: "7"
+            });
+          case ONE_AND_A_HALF:
+            return Note({
+              ...note,
+              relative: 7,
+              name: "1",
+              accidentals: ["#"]
+            });
+          case TWO_AND_A_HALF:
+            return Note({
+              ...note,
+              relative: 1,
+              name: isQuality(chord) === "M7" ? "3" : "2",
+              accidentals: isQuality(chord) === "M7" ? ["b"] : ["#"]
+            });
+          case THREE:
+            return Note({
+              ...note,
+              relative: isQuality(chord) === "sus2" ? 2 : 3,
+              name: isQuality(chord) === "sus2" ? "3" : "4",
+              accidentals: isQuality(chord) === "sus2" ? [] : ["b"]
+            });
+          case FOUR_AND_A_HALF:
+            return Note({
+              ...note,
+              relative: 3,
+              name: "4",
+              accidentals: ["#"]
+            });
+          case FIVE_AND_A_HALF:
+            return Note({
+              ...note,
+              relative: 4,
+              name: "5",
+              accidentals: ["#"]
+            });
+          case SIX_AND_A_HALF:
+            return Note({
+              ...note,
+              relative: 5,
+              name: "6",
+              accidentals: ["#"]
+            });
+          default:
+            return note;
+        }
+      }
       case TWO: {
         switch (note.value) {
           case TWO:
@@ -284,7 +460,81 @@ export const nameNotesAsNaturals = (chord) => {
             return note;
         }
       }
-      case FOUR_AND_A_HALF:
+      case FOUR_AND_A_HALF: {
+        switch (note.value) {
+          case FOUR:
+            return Note({
+              ...note,
+              relative: 7,
+              name: "3",
+              accidentals: ["#"]
+            });
+          case SIX:
+            return Note({ ...note, relative: 3, name: "6" });
+          case ONE:
+            return Note({ ...note, relative: 5, name: "1" });
+          case THREE:
+            return Note({ ...note, relative: 7, name: "3" });
+          case FOUR_AND_A_HALF:
+            return Note({
+              ...note,
+              relative: 1,
+              name: "4",
+              accidentals: ["#"]
+            });
+          case FIVE:
+            return Note({
+              ...note,
+              relative: 2,
+              name: "5",
+              accidentals: []
+            });
+          case FIVE_AND_A_HALF:
+            return Note({
+              ...note,
+              relative: 2,
+              name: "5",
+              accidentals: ["#"]
+            });
+          case SIX_AND_A_HALF:
+            return Note({
+              ...note,
+              relative: isQuality(chord) === "sus4" ? 4 : 3,
+              name: isQuality(chord) === "sus4" ? "7" : "6",
+              accidentals: isQuality(chord) === "sus4" ? ["b"] : ["#"]
+            });
+          case SEVEN:
+            return Note({
+              ...note,
+              relative: 4,
+              name: "7",
+              accidentals: ["#"]
+            });
+          case ONE_AND_A_HALF:
+            return Note({
+              ...note,
+              relative: 1,
+              name: "1",
+              accidentals: ["#"]
+            });
+          case TWO_AND_A_HALF:
+            return Note({
+              ...note,
+              relative: 7,
+              name: "3",
+              accidentals: ["b"]
+            });
+          case TWO:
+            return Note({
+              ...note,
+              relative: 5,
+              name: "2",
+              accidentals: []
+            });
+          default:
+            return note;
+        }
+      }
       case FOUR: {
         switch (note.value) {
           case FOUR:
@@ -356,7 +606,85 @@ export const nameNotesAsNaturals = (chord) => {
         }
       }
 
-      case FIVE_AND_A_HALF:
+      case FIVE_AND_A_HALF: {
+        switch (note.value) {
+          case FIVE:
+            return Note({
+              ...note,
+              relative: 7,
+              name: "4",
+              accidentals: ["#"]
+            });
+          case SEVEN:
+            return Note({ ...note, relative: 3, name: "7" });
+          case TWO:
+            return Note({ ...note, relative: 5, name: "2" });
+          case FOUR:
+            return Note({
+              ...note,
+              relative: 1,
+              name: isQuality(chord) === "°7" ? "4" : "4",
+              accidentals: isQuality(chord) === "°7" ? ["b"] : []
+            });
+
+          case FIVE_AND_A_HALF:
+            return Note({
+              ...note,
+              relative: 1,
+              name: "5",
+              accidentals: ["#"]
+            });
+          case SIX:
+            return Note({
+              ...note,
+              relative: 2,
+              name: "6",
+              accidentals: [""]
+            });
+          case SIX_AND_A_HALF:
+            return Note({
+              ...note,
+              relative: 2,
+              name: "6",
+              accidentals: ["#"]
+            });
+          case ONE:
+            return Note({
+              ...note,
+              relative: isQuality(chord) === "sus4" ? 4 : 3,
+              name: isQuality(chord) === "sus4" ? "1" : "7",
+              accidentals: isQuality(chord) === "sus4" ? [] : ["#"]
+            });
+          case ONE_AND_A_HALF:
+            return Note({
+              ...note,
+              relative: 4,
+              name: "1",
+              accidentals: ["#"]
+            });
+          case TWO_AND_A_HALF:
+            return Note({
+              ...note,
+              relative: 5,
+              name: "2",
+              accidentals: ["#"]
+            });
+          case THREE:
+            return Note({
+              ...note,
+              relative: 5,
+              name: "3"
+            });
+          case FOUR_AND_A_HALF:
+            return Note({
+              ...note,
+              relative: 7,
+              name: "4"
+            });
+          default:
+            return note;
+        }
+      }
       case FIVE: {
         switch (note.value) {
           case FIVE:
@@ -429,7 +757,86 @@ export const nameNotesAsNaturals = (chord) => {
         }
       }
 
-      case SIX_AND_A_HALF:
+      case SIX_AND_A_HALF: {
+        switch (note.value) {
+          case SIX_AND_A_HALF:
+            return Note({
+              ...note,
+              relative: 1,
+              name: "6",
+              accidentals: ["#"]
+            });
+          case TWO:
+            return Note({
+              ...note,
+              relative: 3,
+              name: "1",
+              accidentals: ["#", "#"]
+            });
+          case FOUR:
+            return Note({
+              ...note,
+              relative: 5,
+              name: "3",
+              accidentals: ["#", "#"]
+            });
+          case SIX:
+            return Note({
+              ...note,
+              relative: 7,
+              name: "5",
+              accidentals: ["#", "#"]
+            });
+          case ONE_AND_A_HALF:
+            return Note({
+              ...note,
+              relative: 3,
+              name: "1",
+              accidentals: ["#"]
+            });
+          case FIVE_AND_A_HALF:
+            return Note({
+              ...note,
+              relative: 7,
+              name: "5",
+              accidentals: ["#"]
+            });
+          case FOUR_AND_A_HALF:
+            return Note({
+              ...note,
+              relative: 5,
+              name: "4"
+            });
+          case THREE:
+            return Note({
+              ...note,
+              relative: 5,
+              name: "3"
+            });
+          case FIVE:
+            return Note({
+              ...note,
+              relative: 7,
+              name: "5"
+            });
+          case ONE:
+            return Note({
+              ...note,
+              relative: 2,
+              name: "7",
+              accidentals: ["#"]
+            });
+          case TWO_AND_A_HALF:
+            return Note({
+              ...note,
+              relative: 4,
+              name: "2",
+              accidentals: ["#"]
+            });
+          default:
+            return note;
+        }
+      }
       case SIX: {
         switch (note.value) {
           case SIX:
