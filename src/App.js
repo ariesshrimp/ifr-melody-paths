@@ -14,6 +14,7 @@ import * as R from "ramda";
 import * as DnD from "react-dnd";
 import { css, keyframes } from "@emotion/react";
 import * as Animations from "react-animations";
+import * as Router from "react-router-dom";
 
 const AllChords = R.merge(DiatonicChords, NonDiatonicChords);
 const sortedChordNames = [
@@ -146,6 +147,35 @@ const translate = (chordName) => {
   }
 };
 
+const translateQ = (quality) => {
+  switch (quality) {
+    case "Major7":
+      return "M7";
+    case "Major":
+      return "";
+    case "Minor":
+      return "–";
+    case "Minor7":
+      return "–7";
+    case "Diminished7":
+      return "°7";
+    case "HalfDiminished":
+      return "–7♭5";
+    case "Augmented":
+      return "+";
+    case "Diminished":
+      return "°";
+    case "Dominant":
+      return "7";
+    case "Sus2":
+      return "sus2";
+    case "Sus4":
+      return "sus4";
+    default:
+      return quality;
+  }
+};
+
 const ProgressionEntry = ({ chord, quality, fields, index }) => {
   const ref = React.useRef();
   const isLast = index === fields.fields.length - 1;
@@ -265,6 +295,22 @@ const ProgressionEntry = ({ chord, quality, fields, index }) => {
         </MU.Grid>
       ) : null}
       <Chord chord={chord} quality={quality} />
+      <MU.Typography
+        variant="h5"
+        sx={{
+          color: "rgba(255,255,255,0.6)",
+          position: "absolute",
+          right: 0,
+          paddingRight: "5px"
+        }}
+      >
+        {`${translate(chord)}`}
+        <sup>
+          <MU.Typography variant="subtitle2" sx={{ display: "inline" }}>
+            {translateQ(quality)}
+          </MU.Typography>
+        </sup>
+      </MU.Typography>
     </MU.Card>
   );
 };
@@ -276,7 +322,7 @@ export default function App() {
   const [quality, updateQuality] = React.useState(qualities[0].name);
   const [chord, updateChord] = React.useState(chords[0]);
   const [visible, updateVisibility] = React.useState(true);
-
+  const [firstLoad, trackFirstLoad] = React.useState(true);
   const form = Forms.useForm({
     defaultValues: {
       "chord-selections": [{ chord, quality }]
@@ -301,8 +347,37 @@ export default function App() {
       return chord;
     });
 
+  const navigate = Router.useNavigate();
+  const location = Router.useLocation();
+
+  React.useEffect(() => {
+    if (firstLoad) {
+      trackFirstLoad(false);
+      if (location.hash) {
+        const json = decodeURIComponent(location.hash).split("#")[1];
+        const selections = JSON.parse(json);
+
+        form.resetField("chord-selections", { defaultValue: selections });
+        updateChord(R.last(selections).chord);
+        updateQuality(R.last(selections).quality);
+      }
+    }
+  }, [location.hash, fields.fields, form, firstLoad]);
+
+  React.useEffect(() => {
+    const subscription = form.watch((values) => {
+      const selections = values["chord-selections"];
+      const encoded = encodeURIComponent(JSON.stringify(selections));
+      navigate(`#${encoded}`, { replace: true, state: selections });
+    });
+    return () => subscription.unsubscribe();
+  }, [form, navigate]);
+
   return (
-    <MU.Grid container direction="column" spacing={1} sx={{ padding: "1em" }}>
+    <MU.Grid container direction="column" spacing={6} sx={{ padding: "1em" }}>
+      <MU.Grid item component={MU.Typography} variant="h2" xs>
+        IFR Melody Paths
+      </MU.Grid>
       <MU.Grid
         item
         container
@@ -310,11 +385,12 @@ export default function App() {
         justifyContent="space-between"
         wrap="nowrap"
       >
-        <MU.Grid item component={MU.FormControl} xs fullWidth>
+        <MU.Grid item component={MU.FormControl} size="small" xs fullWidth>
           <MU.InputLabel id="chord-quality-select-label">
             Chord Quality (least to most tension)
           </MU.InputLabel>
           <MU.Select
+            size="small"
             defaultValue={qualities[0].name}
             fullWidth
             id="chord-quality-select"
@@ -340,13 +416,14 @@ export default function App() {
           </MU.Select>
         </MU.Grid>
 
-        <MU.Grid item component={MU.FormControl} xs fullWidth>
+        <MU.Grid item component={MU.FormControl} size="small" xs fullWidth>
           <MU.InputLabel id="chord-number-select-label">
             Diatonic Chord Function
           </MU.InputLabel>
           <MU.Select
             defaultValue={chords[0]}
             fullWidth
+            size="small"
             id="chord-number-select"
             labelId="chord-number-select-label"
             onChange={handleChordSelection}
@@ -369,22 +446,37 @@ export default function App() {
             })}
           </MU.Select>
         </MU.Grid>
-        <MU.Tooltip title="Add chord">
-          <MU.Grid
-            item
-            sx={{ margin: "10px" }}
-            component={MU.Button}
-            variant="contained"
-            onClick={() => fields.append({ chord, quality })}
-          >
-            <Icons.Add />
-          </MU.Grid>
-        </MU.Tooltip>
+        <MU.Grid sx={{ width: "unset" }} item container direction="column">
+          <MU.Tooltip title="Add chord to progression" placement="top">
+            <MU.Grid item xs>
+              <MU.Button
+                variant="contained"
+                onClick={() => fields.append({ chord, quality })}
+              >
+                <Icons.Add />
+              </MU.Button>
+            </MU.Grid>
+          </MU.Tooltip>
+          <MU.Tooltip title="Start over">
+            <MU.Grid item xs>
+              <MU.Button
+                variant="contained"
+                color="error"
+                onClick={() =>
+                  form.resetField("chord-selections", {
+                    defaultValue: [{ chord, quality }]
+                  })
+                }
+              >
+                <Icons.Delete />
+              </MU.Button>
+            </MU.Grid>
+          </MU.Tooltip>
+        </MU.Grid>
         <MU.Tooltip title="Hide preview">
           <MU.Grid
             item
             container
-            component={MU.Card}
             direction="column-reverse"
             justifyContent="center"
             alignItems="center"
