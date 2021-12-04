@@ -1018,12 +1018,12 @@ export const DiatonicChords = {
 };
 
 export const NonDiatonicChords = {
-  SharpOne: [ONE_AND_A_HALF, FOUR, FIVE_AND_A_HALF, ONE],
-  SharpTwo: [TWO_AND_A_HALF, FIVE, SIX_AND_A_HALF, TWO],
+  FlatTwo: [ONE_AND_A_HALF, FOUR, FIVE_AND_A_HALF, ONE],
+  FlatThree: [TWO_AND_A_HALF, FIVE, SIX_AND_A_HALF, TWO],
   // SharpThree: sharp three is actually just diatonic four
-  SharpFour: [FOUR_AND_A_HALF, SIX_AND_A_HALF, ONE_AND_A_HALF, FOUR],
-  SharpFive: [FIVE_AND_A_HALF, ONE, TWO_AND_A_HALF, FIVE],
-  SharpSix: [SIX_AND_A_HALF, TWO, FOUR, SIX]
+  FlatFive: [FOUR_AND_A_HALF, SIX_AND_A_HALF, ONE_AND_A_HALF, FOUR],
+  FlatSix: [FIVE_AND_A_HALF, ONE, TWO_AND_A_HALF, FIVE],
+  FlatSeven: [SIX_AND_A_HALF, TWO, FOUR, SIX]
   // SharpSeven: sharp seven is actually just diatonic one
 };
 

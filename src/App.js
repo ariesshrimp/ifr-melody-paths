@@ -1,65 +1,41 @@
-/** @jsxImportSource @emotion/react */
-import React from "react";
-import {
-  nameNotesAsNaturals,
-  DiatonicChords,
-  NonDiatonicChords,
-  complete
-} from "./formulas";
-import ChordQualities from "./qualities";
-import * as MU from "@mui/material";
-import * as Icons from "@mui/icons-material";
+import * as Constants from "./constants";
 import * as Forms from "react-hook-form";
+import * as Icons from "@mui/icons-material";
+import * as MU from "@mui/material";
+import * as Player from "./player";
 import * as R from "ramda";
-import * as DnD from "react-dnd";
-import { css, keyframes } from "@emotion/react";
-import * as Animations from "react-animations";
 import * as Router from "react-router-dom";
+import * as Tone from "tone";
+import ChordQualities from "./qualities";
+import ProgressionEntry from "./components/progression-entry";
+import React from "react";
 
-const AllChords = R.merge(DiatonicChords, NonDiatonicChords);
-const sortedChordNames = [
-  "One",
-  "SharpOne",
-  "Two",
-  "SharpTwo",
-  "Three",
-  "Four",
-  "SharpFour",
-  "Five",
-  "SharpFive",
-  "Six",
-  "SharpSix",
-  "Seven"
-];
-const stringify = (accidentals) => {
-  return accidentals.reduce((result, current) => {
-    return `${current}${result}`;
-  }, "");
-};
-
-const Note = ({ chordTone, name, value, accidentals = [] }) => {
-  const accidentalSymbols = stringify(accidentals);
-  return (
-    <MU.Box
-      component={"li"}
-      sx={{
-        listStylePosition: "outside",
-        minWidth: 0,
-        textAlign: "center",
-        ...(chordTone
-          ? { color: "white", fontWeight: "bold", fontSize: "1.2em" }
-          : {})
-      }}
-      key={`${accidentalSymbols}-${name}-${value}`}
-    >
-      <MU.Typography>{`${accidentalSymbols}${name}`}</MU.Typography>
-    </MU.Box>
-  );
+const useFetch = ({ url = "", options }) => {
+  const [results, saveResults] = React.useState([]);
+  const [loading, setLoading] = React.useState(false);
+  const [error, saveError] = React.useState(null);
+  React.useEffect(() => {
+    (async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(url, options || {});
+        const result = await response.json();
+        saveResults(result);
+      } catch (e) {
+        saveError(e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [options, url]);
+  return { results, loading, error };
 };
 
 const colorByNumber = (chord) => {
-  const cCount = sortedChordNames.length;
-  const cIndex = sortedChordNames.findIndex(R.equals(chord));
+  const cCount = Constants.ORDERED_CHORD_FUNCTION_NAMES.length;
+  const cIndex = Constants.ORDERED_CHORD_FUNCTION_NAMES.findIndex(
+    R.equals(chord)
+  );
   const x = cIndex / cCount;
   const maxRange = 0 / cCount;
   const minRange = (cCount - 1) / cCount;
@@ -75,45 +51,6 @@ const colorByQuality = (quality) => {
   const qIndex = qNames.findIndex(R.equals(quality));
   const k = Math.round(255 / qCount);
   return [k * qIndex, 255 - k * qIndex];
-};
-const chordColors = (quality, chord) => {
-  const [red, blue] = colorByQuality(quality);
-  const green = 0;
-  const alpha = colorByNumber(chord);
-  const result = `rgba(${red},${green},${blue},${alpha})`;
-  return result;
-};
-
-const Chord = ({ chord, quality }) => {
-  const qFunc = ChordQualities[quality];
-  const qualified = qFunc(AllChords[chord]);
-  const namedNotes = nameNotesAsNaturals(qualified);
-  const completed = complete(namedNotes);
-
-  return (
-    <MU.Box
-      component="ul"
-      sx={{
-        alignItems: "center",
-        alignSelf: "center",
-        boxSizing: "border-box",
-        display: "flex",
-        flexFlow: "column",
-        justifyContent: "center",
-        listStyle: "none",
-        marginBlockEnd: 0,
-        marginBlockStart: 0,
-        minWidth: 0,
-        padding: 0,
-        textAlign: "center"
-      }}
-    >
-      {completed.map((note, index) => (
-        <Note key={`note-${chord}-${quality}-${note}-${index}`} {...note} />
-      ))}
-      <Note {...completed[0]} />
-    </MU.Box>
-  );
 };
 
 const translate = (chordName) => {
@@ -147,191 +84,69 @@ const translate = (chordName) => {
   }
 };
 
-const translateQ = (quality) => {
-  switch (quality) {
-    case "Major7":
-      return "M7";
-    case "Major":
-      return "";
-    case "Minor":
-      return "–";
-    case "Minor7":
-      return "–7";
-    case "Diminished7":
-      return "°7";
-    case "HalfDiminished":
-      return "–7♭5";
-    case "Augmented":
-      return "+";
-    case "Diminished":
-      return "°";
-    case "Dominant":
-      return "7";
-    case "Sus2":
-      return "sus2";
-    case "Sus4":
-      return "sus4";
-    default:
-      return quality;
-  }
-};
-
-const ProgressionEntry = ({ chord, quality, fields, index }) => {
-  const ref = React.useRef();
-  const isLast = index === fields.fields.length - 1;
-
-  const [{ opacity }, drag] = DnD.useDrag(
-    () => ({
-      type: "chord",
-      item: () => {
-        return { index };
-      },
-      canDrag: () => !isLast,
-      collect: (monitor) => ({
-        opacity: !!monitor.isDragging() ? 0.5 : 1
-      })
-    }),
-    [index, isLast]
-  );
-  const [{ isActive }, drop] = DnD.useDrop(
-    () => ({
-      accept: "chord",
-      drop: (target) => {
-        fields.move(target.index, index);
-      },
-      collect: (monitor) => ({
-        isActive: monitor.isOver()
-      })
-    }),
-    [index, fields]
-  );
-
-  drag(drop(ref));
-  const qFunc = ChordQualities[quality];
-  return (
-    <MU.Card
-      square
-      raised={isActive}
-      ref={ref}
-      sx={{
-        background: chordColors(qFunc.name, chord),
-        cursor: isLast ? "not-allowed" : "move",
-        display: "flex",
-        flexFlow: "column",
-        opacity,
-        position: "relative",
-        width: "25%"
-      }}
-      css={
-        isLast
-          ? css`
-              animation: 2s ${keyframes`${Animations.pulse}`} infinite;
-            `
-          : css``
-      }
-    >
-      {!isLast ? (
-        <MU.Grid
-          container
-          direction="column"
-          justifyContent="flex-start"
-          alignItems="flex-start"
-          sx={{
-            position: "absolute"
-          }}
-        >
-          <MU.Grid
-            item
-            component={MU.IconButton}
-            size="small"
-            variant="contained"
-            onClick={() => fields.remove(index)}
-            sx={{
-              backgroundColor: "transparent"
-            }}
-          >
-            <Icons.Clear />
-          </MU.Grid>
-          <MU.Grid
-            item
-            component={MU.IconButton}
-            size="small"
-            variant="contained"
-            onClick={() => fields.insert(index + 1, { chord, quality })}
-            sx={{
-              backgroundColor: "transparent"
-            }}
-          >
-            <Icons.LibraryAddTwoTone />
-          </MU.Grid>
-          {index > 0 ? (
-            <MU.Grid
-              item
-              component={MU.IconButton}
-              size="small"
-              variant="contained"
-              onClick={() => fields.move(index, index - 1)}
-              sx={{
-                backgroundColor: "transparent"
-              }}
-            >
-              <Icons.ArrowLeftTwoTone />
-            </MU.Grid>
-          ) : null}
-          {index < fields.fields.length - 2 ? (
-            <MU.Grid
-              item
-              component={MU.IconButton}
-              size="small"
-              variant="contained"
-              onClick={() => fields.move(index, index + 1)}
-              sx={{
-                backgroundColor: "transparent"
-              }}
-            >
-              <Icons.ArrowRightTwoTone />
-            </MU.Grid>
-          ) : null}
-        </MU.Grid>
-      ) : null}
-      <Chord chord={chord} quality={quality} />
-      <MU.Typography
-        variant="h5"
-        sx={{
-          color: "rgba(255,255,255,0.6)",
-          position: "absolute",
-          right: 0,
-          paddingRight: "5px"
-        }}
-      >
-        {`${translate(chord)}`}
-        <sup>
-          <MU.Typography variant="subtitle2" sx={{ display: "inline" }}>
-            {translateQ(quality)}
-          </MU.Typography>
-        </sup>
-      </MU.Typography>
-    </MU.Card>
-  );
-};
-
 export default function App() {
   const qualities = Object.values(ChordQualities);
-  const chords = sortedChordNames;
+  const chords = Constants.ORDERED_CHORD_FUNCTION_NAMES;
 
   const [quality, updateQuality] = React.useState(qualities[0].name);
   const [chord, updateChord] = React.useState(chords[0]);
   const [visible, updateVisibility] = React.useState(true);
   const [firstLoad, trackFirstLoad] = React.useState(true);
+  const [playing, togglePlaying] = React.useState(false);
+
   const form = Forms.useForm({
     defaultValues: {
-      "chord-selections": [{ chord, quality }]
+      chord_selections: [{ chord, quality }],
+      bpm: 85,
+      key: "C",
+      instrument: "pad_2_warm",
+      attack: 0.1,
+      decay: 0.3,
+      sustain: 1,
+      release: 0.6
     }
   });
+
   const fields = Forms.useFieldArray({
     control: form.control,
-    name: "chord-selections"
+    name: "chord_selections"
   });
+
+  const { results: instruments, loading: instrumentsLoading } = useFetch({
+    url:
+      "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/names.json?raw=true"
+  });
+
+  const {
+    chord_selections = [],
+    bpm,
+    key,
+    instrument,
+    attack,
+    decay,
+    sustain,
+    release
+  } = form.watch();
+  const envelope = Player.useAmplitudeEnvelope({
+    attack,
+    decay,
+    sustain,
+    release
+  });
+  const { sampler, loading: samplerLoading } = Player.useSounds({ instrument });
+
+  // React.useEffect(() => {
+  //   if (sampler.current && envelope.current)
+  //     sampler.current.connect(envelope.current);
+  // }, [sampler, envelope]);
+
+  Player.useProgression({
+    chords: chord_selections,
+    player: sampler.current,
+    key
+  });
+
+  const transport = Player.useTransport({ bpm });
 
   const handleQualitySelection = (e) =>
     updateQuality(() => {
@@ -357,7 +172,7 @@ export default function App() {
         const json = decodeURIComponent(location.hash).split("#")[1];
         const selections = JSON.parse(json);
 
-        form.resetField("chord-selections", { defaultValue: selections });
+        form.resetField("chord_selections", { defaultValue: selections });
         updateChord(R.last(selections).chord);
         updateQuality(R.last(selections).quality);
       }
@@ -366,14 +181,17 @@ export default function App() {
 
   React.useEffect(() => {
     const subscription = form.watch((values) => {
-      const selections = values["chord-selections"];
+      const selections = values["chord_selections"];
       const encoded = encodeURIComponent(JSON.stringify(selections));
       navigate(`#${encoded}`, { replace: true, state: selections });
     });
     return () => subscription.unsubscribe();
   }, [form, navigate]);
 
-  return (
+  const loading = samplerLoading || instrumentsLoading;
+  return loading ? (
+    "loading..."
+  ) : (
     <MU.Grid container direction="column" spacing={6} sx={{ padding: "1em" }}>
       <MU.Grid item component={MU.Typography} variant="h2" xs>
         IFR Melody Paths
@@ -415,7 +233,6 @@ export default function App() {
             })}
           </MU.Select>
         </MU.Grid>
-
         <MU.Grid item component={MU.FormControl} size="small" xs fullWidth>
           <MU.InputLabel id="chord-number-select-label">
             Diatonic Chord Function
@@ -463,7 +280,7 @@ export default function App() {
                 variant="contained"
                 color="error"
                 onClick={() =>
-                  form.resetField("chord-selections", {
+                  form.resetField("chord_selections", {
                     defaultValue: [{ chord, quality }]
                   })
                 }
@@ -473,7 +290,149 @@ export default function App() {
             </MU.Grid>
           </MU.Tooltip>
         </MU.Grid>
-        <MU.Tooltip title="Hide preview">
+        <MU.Grid
+          sx={{ width: "unset", margin: "0 1em" }}
+          item
+          container
+          justifyContent="center"
+          alignItems="center"
+          direction="column"
+        >
+          <MU.InputLabel id="attack-select-label">Attack</MU.InputLabel>
+          <Forms.Controller
+            control={form.control}
+            name="attack"
+            render={({ field }) => {
+              return (
+                <MU.Slider min={0} max={1} sx={{ flexGrow: 1 }} {...field} />
+              );
+            }}
+          />
+
+          <MU.InputLabel id="decay-select-label">Decay</MU.InputLabel>
+          <Forms.Controller
+            control={form.control}
+            name="decay"
+            render={({ field }) => {
+              return (
+                <MU.Slider min={0} max={1} sx={{ flexGrow: 1 }} {...field} />
+              );
+            }}
+          />
+
+          <MU.InputLabel id="sustain-select-label">Sustain</MU.InputLabel>
+          <Forms.Controller
+            control={form.control}
+            name="sustain"
+            render={({ field }) => {
+              return (
+                <MU.Slider min={0} max={1} sx={{ flexGrow: 1 }} {...field} />
+              );
+            }}
+          />
+
+          <MU.InputLabel id="release-select-label">Release</MU.InputLabel>
+          <Forms.Controller
+            control={form.control}
+            name="release"
+            render={({ field }) => {
+              return (
+                <MU.Slider min={0} max={1} sx={{ flexGrow: 1 }} {...field} />
+              );
+            }}
+          />
+        </MU.Grid>
+        <MU.Grid
+          sx={{ width: "unset", margin: "0 1em" }}
+          item
+          container
+          justifyContent="center"
+          alignItems="center"
+          direction="column"
+        >
+          <Forms.Controller
+            control={form.control}
+            name="key"
+            render={({ field }) => {
+              return (
+                <MU.Select sx={{ flexGrow: 1 }} {...field}>
+                  {Constants.KEYS.map((key) => {
+                    return (
+                      <MU.MenuItem
+                        key={`key-selection-option-${key}`}
+                        value={key}
+                      >
+                        {key}
+                      </MU.MenuItem>
+                    );
+                  })}
+                </MU.Select>
+              );
+            }}
+          />
+        </MU.Grid>
+        <MU.Grid
+          sx={{ width: "unset", margin: "0 1em" }}
+          item
+          container
+          justifyContent="center"
+          alignItems="center"
+          direction="column"
+        >
+          <Forms.Controller
+            control={form.control}
+            name="instrument"
+            render={({ field }) => {
+              return (
+                <MU.Select sx={{ flexGrow: 1 }} {...field}>
+                  {instruments.sort().map((instrument) => {
+                    return (
+                      <MU.MenuItem
+                        key={`${instrument}-option`}
+                        value={instrument}
+                      >
+                        {instrument}
+                      </MU.MenuItem>
+                    );
+                  })}
+                </MU.Select>
+              );
+            }}
+          />
+        </MU.Grid>
+        <MU.Grid
+          sx={{ width: "unset", margin: "0 1em" }}
+          item
+          container
+          direction="column"
+        >
+          <MU.Grid item xs>
+            <MU.Tooltip title="Play progression">
+              <MU.Grid item xs>
+                <MU.Button
+                  variant="contained"
+                  color={playing ? "warning" : "primary"}
+                  onClick={() => {
+                    togglePlaying(!playing);
+                    if (!playing) {
+                      Tone.context.resume();
+                      transport.current.start();
+                    } else {
+                      transport.current.pause();
+                    }
+                  }}
+                >
+                  {playing ? <Icons.Pause /> : <Icons.PlayArrow />}
+                </MU.Button>
+              </MU.Grid>
+            </MU.Tooltip>
+            <MU.Typography>{form.getValues().bpm}bpm</MU.Typography>
+            <MU.Tooltip title="Set bpm">
+              <MU.Slider step={1} {...form.register("bpm")} />
+            </MU.Tooltip>
+          </MU.Grid>
+        </MU.Grid>
+        <MU.Tooltip title="Hide controls">
           <MU.Grid
             item
             container
@@ -491,11 +450,25 @@ export default function App() {
               size="xs"
               onChange={() => updateVisibility(!visible)}
             />
-            {visible ? (
-              <Icons.VisibilityOff size="xs" color="primary" />
-            ) : (
-              <Icons.Visibility size="xs" color="primary" />
-            )}
+            <MU.Grid
+              justifyContent="center"
+              container
+              direction="row"
+              wrap="nowrap"
+            >
+              <Icons.DisplaySettings
+                size="xs"
+                color={visible ? "primary" : "disabled"}
+              />
+              {visible ? (
+                <Icons.VisibilityOff size="xs" color="primary" />
+              ) : (
+                <Icons.Visibility
+                  size="xs"
+                  color={visible ? "primary" : "disabled"}
+                />
+              )}
+            </MU.Grid>
           </MU.Grid>
         </MU.Tooltip>
       </MU.Grid>
